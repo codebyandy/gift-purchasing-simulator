@@ -1,0 +1,13 @@
+s_date,s_price_a,s_price_b,s_price_c,s_bought_a,s_bought_b,s_bought_c,s_money_left,a,sp_date,sp_price_a,sp_price_b,sp_price_c,sp_bought_a,sp_bought_b,sp_bought_c,sp_money_left,r
+0,50,100,250,False,False,False,400,0,0,47.5,98.19,270.57,False,False,False,400,85.66223990321315
+1,47.5,98.19,270.57,False,False,False,400,4,1,44.24,100.24,266.32,True,False,False,352.5,87.41044888082975
+2,44.24,100.24,266.32,True,False,False,352.5,2,2,37.56,93.11,250.01,True,True,False,252.26,89.19433559268342
+3,37.56,93.11,250.01,True,True,False,252.26,0,3,34.85,98.26,297.27,True,True,False,252.26,91.0146281557994
+4,34.85,98.26,297.27,True,True,False,252.26,0,4,34.22,100.36,268.46,True,True,False,252.26,92.87206954673408
+5,34.22,100.36,268.46,True,True,False,252.26,0,5,36.82,99.4,284.33,True,True,False,252.26,94.7674179048307
+6,36.82,99.4,284.33,True,True,False,252.26,0,6,40.38,107.82,258.05,True,True,False,252.26,96.70144684166398
+7,40.38,107.82,258.05,True,True,False,252.26,0,7,36.17,98.34,249.0,True,True,False,252.26,98.67494575679999
+8,36.17,98.34,249.0,True,True,False,252.26,0,8,32.45,105.48,253.2,True,True,False,252.26,100.68872015999999
+9,32.45,105.48,253.2,True,True,False,252.26,0,9,34.29,101.14,204.3,True,True,False,252.26,102.74359199999999
+10,34.29,101.14,204.3,True,True,False,252.26,0,10,37.08,94.78,145.28,True,True,False,252.26,104.84039999999999
+11,37.08,94.78,145.28,True,True,False,252.26,1,11,35.01,68.54,158.74,True,True,True,106.97999999999999,106.97999999999999
