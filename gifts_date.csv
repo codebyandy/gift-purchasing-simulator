@@ -1,0 +1,6 @@
+s_date,s_price_a,s_price_b,s_price_c,s_bought_a,s_bought_b,s_bought_c,s_money_left,buy_a,buy_b,buy_c,sp_date,sp_price_a,sp_price_b,sp_price_c,sp_bought_a,sp_bought_b,sp_bought_c,sp_money_left,buy_ap,buy_bp,buy_cp,r
+0,50,100,250,False,False,False,400,0,1,1,0,53.84,88.58,228.16,False,True,True,50,0,0,0,0.516526169600002
+1,53.84,88.58,228.16,False,True,True,50,0,0,0,1,54.22,90.48,253.52,False,True,True,50,0,0,0,0.527067520000002
+2,54.22,90.48,253.52,False,True,True,50,0,0,0,2,59.7,74.55,283.09,False,True,True,50,0,0,0,0.5378240000000021
+3,59.7,74.55,283.09,False,True,True,50,0,0,0,3,49.44,69.97,300.72,False,True,True,50,1,0,0,0.5488000000000022
+4,49.44,69.97,300.72,False,True,True,50,1,0,0,4,47.17,67.54,318.47,True,True,True,0.5600000000000023,NONE,NONE,NONE,0.5600000000000023

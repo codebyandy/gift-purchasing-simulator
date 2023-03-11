@@ -1,0 +1,8 @@
+
+
+To-do
+- Set up action-value approximation function
+- Q-learn using action-value approximation
+        - Choose exploration strategy (epsilon-greedy)
+- Run q-learning for N iterations
+- Use q function to "solve game" and see how well it does
