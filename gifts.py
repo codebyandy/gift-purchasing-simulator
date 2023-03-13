@@ -1,5 +1,7 @@
+import sys
 
 import numpy as np
+import matplotlib.pyplot as plt
 import io
 import random
 
@@ -9,16 +11,15 @@ PENALTY_A, PENALTY_B, PENALTY_C = 100, 200, 500
 DAYS = 25
 REWARD_DECAY = 0.98
 GAMMA = 0.9
-ALPHA = 0.00001
 EPSILON = 0.2
-NUM_ITERATIONS = 500
+EPSILON_DECAY = 0.99
+NUM_ITERATIONS = 1000
 
 def calculate_prices(price_a, price_b, price_c):
     price_a *= np.random.normal(1, 0.1)
     price_b *= np.random.normal(1, 0.1)
     price_c *= np.random.normal(1, 0.1)
     return round(price_a, 2), round(price_b, 2), round(price_c, 2)
-
 
 def choose_action_random(theta, i, price_a, price_b, price_c, bought_a, bought_b, bought_c, money_left):
     action_a = False if bought_a else (True if random.random() < 0.2 and price_a < money_left else False)
@@ -57,11 +58,11 @@ def get_valid_actions(price_a, price_b, price_c, bought_a, bought_b, bought_c, m
 
     return result
 
-def choose_action_epsilon_greedy(q_approximation, theta, date, price_a, price_b, price_c, bought_a, bought_b, bought_c, money_left):
+def choose_action_epsilon_greedy(q_approximation, epsilon, theta, date, price_a, price_b, price_c, bought_a, bought_b, bought_c, money_left):
     actions = get_valid_actions(price_a, price_b, price_c, bought_a, bought_b, bought_c, money_left)
 
     # Epsilon chance to explore
-    if random.random() < EPSILON:
+    if random.random() < epsilon:
         return random.choice(list(actions))
 
     # Otherwise, greedy
@@ -77,7 +78,7 @@ def choose_action_epsilon_greedy(q_approximation, theta, date, price_a, price_b,
 
     return best_action
 
-def simulate(q_approximation, theta, output):
+def simulate(q_approximation, epsilon, theta, output):
     price_a, price_b, price_c = PRICE_A, PRICE_B, PRICE_C
     bought_a, bought_b, bought_c = False, False, False
     money_left = BUDGET
@@ -87,7 +88,7 @@ def simulate(q_approximation, theta, output):
 
     for i in range(DAYS):
         action_a, action_b, action_c = choose_action_epsilon_greedy(
-            q_approximation, theta, i, price_a, price_b, price_c, bought_a, bought_b, bought_c, money_left)
+            q_approximation, epsilon, theta, i, price_a, price_b, price_c, bought_a, bought_b, bought_c, money_left)
         if i != 0:
             f.write("," + str(action_a) + "," + str(action_b) + "," + str(action_c))
             f.write("\n")
@@ -107,7 +108,7 @@ def simulate(q_approximation, theta, output):
         price_a, price_b, price_c = calculate_prices(price_a, price_b, price_c)
         f.write(",".join([str(i), str(price_a), str(price_b), str(price_c), str(bought_a), str(bought_b), str(bought_c), str(money_left)]))
 
-    
+
         if bought_a and bought_b and bought_c:
             break
 
@@ -127,6 +128,8 @@ def simulate(q_approximation, theta, output):
 
     with io.open(output, "w") as f:
         f.writelines(file_lines)
+
+    return score
 
 def readline(line):
     s_date, \
@@ -173,7 +176,49 @@ def q_gradient_linear(s_date, s_price_a, s_price_b, s_price_c,
                         s_money_left,
                         buy_a, buy_b, buy_c], float)
 
-def learn(q_approximation, q_gradient, theta, data):
+def q_approximation_price(theta, s_date, s_price_a, s_price_b, s_price_c,
+                                s_bought_a, s_bought_b, s_bought_c,
+                                s_money_left,
+                                buy_a, buy_b, buy_c):
+    features = [
+        s_date * (s_price_a - PRICE_A),
+        s_date * (s_price_a - PRICE_A) ** 2,
+        s_date ** 2 * (s_price_a - PRICE_A),
+        s_date * (s_price_b - PRICE_B),
+        s_date * (s_price_b - PRICE_B) ** 2,
+        s_date ** 2 * (s_price_b - PRICE_B),
+        s_date * (s_price_c - PRICE_C),
+        s_date * (s_price_c - PRICE_C) ** 2,
+        s_date ** 2 * (s_price_c - PRICE_C),
+        buy_a * (s_money_left - s_price_a),
+        buy_b * (s_money_left - s_price_b),
+        buy_c * (s_money_left - s_price_c),
+    ]
+
+    return np.dot(theta, features)
+
+def q_gradient_price(s_date, s_price_a, s_price_b, s_price_c,
+                        s_bought_a, s_bought_b, s_bought_c,
+                        s_money_left,
+                        buy_a, buy_b, buy_c):
+    features = [
+        s_date * (s_price_a - PRICE_A),
+        s_date * (s_price_a - PRICE_A) ** 2,
+        s_date ** 2 * (s_price_a - PRICE_A),
+        s_date * (s_price_b - PRICE_B),
+        s_date * (s_price_b - PRICE_B) ** 2,
+        s_date ** 2 * (s_price_b - PRICE_B),
+        s_date * (s_price_c - PRICE_C),
+        s_date * (s_price_c - PRICE_C) ** 2,
+        s_date ** 2 * (s_price_c - PRICE_C),
+        buy_a * (s_money_left - s_price_a),
+        buy_b * (s_money_left - s_price_b),
+        buy_c * (s_money_left - s_price_c),
+    ]
+
+    return np.array(features, float)
+
+def learn(q_approximation, q_gradient, alpha, theta, data):
     with io.open(data, "r") as f:
         f.readline() # Skip headers
         for line in f.readlines():
@@ -198,12 +243,13 @@ def learn(q_approximation, q_gradient, theta, data):
                                              sp_bought_a, sp_bought_b, sp_bought_c,
                                              sp_money_left,
                                              buy_ap, buy_bp, buy_cp)
+
             gradient = q_gradient(s_date, s_price_a, s_price_b, s_price_c,
                                     s_bought_a, s_bought_b, s_bought_c,
                                     s_money_left,
                                     buy_a, buy_b, buy_c)
 
-            theta += ALPHA * (r + GAMMA * q_spap - q_sa) * gradient
+            theta += alpha * (r + GAMMA * q_spap - q_sa) * gradient
 
     print("New theta: " + str(theta))
     return theta
@@ -262,10 +308,50 @@ def user_simulate():
     
 def main():
     # user_simulate()
-    theta = np.zeros(11)
+
+    """
+    Linear: 11 features
+    q_approximation_linear
+    q_gradient_linear
+
+    Price mode: 12 features
+    q_approximation_price
+    q_gradient_price
+    """
+
+    mode = sys.argv[1]
+    if mode == "linear":
+        theta = np.zeros(11)
+        q_approximation = q_approximation_linear
+        q_gradient = q_gradient_linear
+        alpha = 1e-8
+    elif mode == "price":
+        theta = np.zeros(12)
+        q_approximation = q_approximation_price
+        q_gradient = q_gradient_price
+        alpha = 1e-10
+    else:
+        print("MODE INVALID")
+        return
+
+    epsilon = EPSILON
+    scores = []
+    averages = []
     for i in range(NUM_ITERATIONS):
-        simulate(q_approximation_linear, theta, "gifts.csv")
-        theta = learn(q_approximation_linear, q_gradient_linear, theta, "gifts.csv")
+        score = simulate(q_approximation, epsilon, theta, "gifts.csv")
+        theta = learn(q_approximation, q_gradient, alpha, theta, "gifts.csv")
+
+        scores.append(score)
+        averages.append(np.mean(scores))
+        epsilon *= EPSILON_DECAY
+
+    plt.plot(range(NUM_ITERATIONS), scores)
+    plt.plot(range(NUM_ITERATIONS), averages)
+    plt.title('Reward vs. iterations')
+    plt.xlabel('# Iterations')
+    plt.ylabel('Reward')
+    plt.show()
+    print("Average score across {} iterations: {}".format(NUM_ITERATIONS, np.mean(scores)))
 
 if __name__ == "__main__":
     main()
