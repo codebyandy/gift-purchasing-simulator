@@ -1,5 +1,4 @@
 
-import sys
 import numpy as np
 import io
 import random
@@ -43,7 +42,7 @@ def get_valid_actions(price_a, price_b, price_c, bought_a, bought_b, bought_c, m
     if bought_c:
         possible_actions -= {(0, 0, 1), (0, 1, 1), (1, 0, 1), (1, 1, 1)}
 
-    actions = set()
+    result = set()
     for action in possible_actions:
         cost = 0
         if action[0]:
@@ -54,16 +53,15 @@ def get_valid_actions(price_a, price_b, price_c, bought_a, bought_b, bought_c, m
             cost += price_c
 
         if cost <= money_left:
-            actions.add(action)
+            result.add(action)
 
-    return actions
+    return result
 
-def choose_action_linear(theta, date, price_a, price_b, price_c, bought_a, bought_b, bought_c, money_left):
+def choose_action_epsilon_greedy(q_approximation, theta, date, price_a, price_b, price_c, bought_a, bought_b, bought_c, money_left):
     actions = get_valid_actions(price_a, price_b, price_c, bought_a, bought_b, bought_c, money_left)
 
     # Epsilon chance to explore
     if random.random() < EPSILON:
-        action = random.choice(list(actions))
         return random.choice(list(actions))
 
     # Otherwise, greedy
@@ -71,7 +69,7 @@ def choose_action_linear(theta, date, price_a, price_b, price_c, bought_a, bough
     best_action_score = float('-inf')
     for action in actions:
         buy_a, buy_b, buy_c = action
-        score = np.dot(theta, np.array([date, price_a, price_b, price_c, bought_a, bought_b, bought_c, money_left, buy_a, buy_b, buy_c]))
+        score = q_approximation(theta, date, price_a, price_b, price_c, bought_a, bought_b, bought_c, money_left, buy_a, buy_b, buy_c)
 
         if score >= best_action_score:
             best_action = action
@@ -79,7 +77,7 @@ def choose_action_linear(theta, date, price_a, price_b, price_c, bought_a, bough
 
     return best_action
 
-def simulate(theta, output):
+def simulate(q_approximation, theta, output):
     price_a, price_b, price_c = PRICE_A, PRICE_B, PRICE_C
     bought_a, bought_b, bought_c = False, False, False
     money_left = BUDGET
@@ -88,7 +86,8 @@ def simulate(theta, output):
     f.write("s_date,s_price_a,s_price_b,s_price_c,s_bought_a,s_bought_b,s_bought_c,s_money_left,buy_a,buy_b,buy_c,sp_date,sp_price_a,sp_price_b,sp_price_c,sp_bought_a,sp_bought_b,sp_bought_c,sp_money_left,buy_ap,buy_bp,buy_cp,r\n")
 
     for i in range(DAYS):
-        action_a, action_b, action_c = choose_action_linear(theta, i, price_a, price_b, price_c, bought_a, bought_b, bought_c, money_left)
+        action_a, action_b, action_c = choose_action_epsilon_greedy(
+            q_approximation, theta, i, price_a, price_b, price_c, bought_a, bought_b, bought_c, money_left)
         if i != 0:
             f.write("," + str(action_a) + "," + str(action_b) + "," + str(action_c))
             f.write("\n")
@@ -114,10 +113,6 @@ def simulate(theta, output):
 
     f.write(',NONE,NONE,NONE')      # No a' for last action
     score = money_left - ((not bought_a) * PENALTY_A) - ((not bought_b) * PENALTY_B) - ((not bought_c) * PENALTY_C)
-    # print("Money left: ", money_left)
-    # print("bought_a: ", bought_a)
-    # print("bought_b: ", bought_b)
-    # print("bought_c: ", bought_c)
     print("Score: ", score)
 
     with io.open(output, "r") as f:
@@ -158,10 +153,27 @@ def readline(line):
             bool(buy_ap), bool(buy_bp), bool(buy_cp), \
             float(r)
 
-def q_approximation(theta, features):
+def q_approximation_linear(theta, s_date, s_price_a, s_price_b, s_price_c,
+                                s_bought_a, s_bought_b, s_bought_c,
+                                s_money_left,
+                                buy_a, buy_b, buy_c):
+
+    features = np.array([s_date, s_price_a, s_price_b, s_price_c,
+                            s_bought_a, s_bought_b, s_bought_c,
+                            s_money_left,
+                            buy_a, buy_b, buy_c])
     return np.dot(theta, features)
 
-def learn(theta, data):
+def q_gradient_linear(s_date, s_price_a, s_price_b, s_price_c,
+                        s_bought_a, s_bought_b, s_bought_c,
+                        s_money_left,
+                        buy_a, buy_b, buy_c):
+    return np.array([s_date, s_price_a, s_price_b, s_price_c,
+                        s_bought_a, s_bought_b, s_bought_c,
+                        s_money_left,
+                        buy_a, buy_b, buy_c], float)
+
+def learn(q_approximation, q_gradient, theta, data):
     with io.open(data, "r") as f:
         f.readline() # Skip headers
         for line in f.readlines():
@@ -177,21 +189,21 @@ def learn(theta, data):
             buy_ap, buy_bp, buy_cp, \
             r = readline(line)
 
-            q_sa = q_approximation(theta, [s_date, s_price_a, s_price_b, s_price_c,
-                                           s_bought_a, s_bought_b, s_bought_c,
-                                           s_money_left,
-                                           buy_a, buy_b, buy_c])
+            q_sa = q_approximation(theta, s_date, s_price_a, s_price_b, s_price_c,
+                                            s_bought_a, s_bought_b, s_bought_c,
+                                            s_money_left,
+                                            buy_a, buy_b, buy_c)
 
-            q_spap = q_approximation(theta, [sp_date, sp_price_a, sp_price_b, sp_price_c,
+            q_spap = q_approximation(theta, sp_date, sp_price_a, sp_price_b, sp_price_c,
                                              sp_bought_a, sp_bought_b, sp_bought_c,
                                              sp_money_left,
-                                             buy_ap, buy_bp, buy_cp])
-            q_gradient = np.array([s_date, s_price_a, s_price_b, s_price_c,
+                                             buy_ap, buy_bp, buy_cp)
+            gradient = q_gradient(s_date, s_price_a, s_price_b, s_price_c,
                                     s_bought_a, s_bought_b, s_bought_c,
                                     s_money_left,
-                                    buy_a, buy_b, buy_c], float)
+                                    buy_a, buy_b, buy_c)
 
-            theta += ALPHA * (r + GAMMA * q_spap - q_sa) * q_gradient
+            theta += ALPHA * (r + GAMMA * q_spap - q_sa) * gradient
 
     print("New theta: " + str(theta))
     return theta
@@ -252,8 +264,8 @@ def main():
     # user_simulate()
     theta = np.zeros(11)
     for i in range(NUM_ITERATIONS):
-        simulate(theta, "gifts.csv")
-        theta = learn(theta, "gifts.csv")
+        simulate(q_approximation_linear, theta, "gifts.csv")
+        theta = learn(q_approximation_linear, q_gradient_linear, theta, "gifts.csv")
 
 if __name__ == "__main__":
     main()
