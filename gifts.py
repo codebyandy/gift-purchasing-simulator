@@ -356,7 +356,7 @@ def main():
         q_gradient = q_gradient_price
         alpha = 1e-10
     elif mode == "price-bool":
-        theta = np.zeros(3)
+        theta = np.zeros(4)
         q_approximation = q_approximation_price_bool
         q_gradient = q_gradient_price_bool
         alpha = 1e-9

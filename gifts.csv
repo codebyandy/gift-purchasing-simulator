@@ -1,7 +1,13 @@
 s_date,s_price_a,s_price_b,s_price_c,s_bought_a,s_bought_b,s_bought_c,s_money_left,buy_a,buy_b,buy_c,sp_date,sp_price_a,sp_price_b,sp_price_c,sp_bought_a,sp_bought_b,sp_bought_c,sp_money_left,buy_ap,buy_bp,buy_cp,r
+<<<<<<< HEAD
 0,50,100,250,False,False,False,400,0,1,1,0,51.06,87.91,243.68,False,True,True,50,0,0,0,7.601973901087996
 1,51.06,87.91,243.68,False,True,True,50,0,0,0,1,51.93,101.96,239.67,False,True,True,50,0,0,0,7.757116225599996
 2,51.93,101.96,239.67,False,True,True,50,0,0,0,2,52.1,100.53,233.3,False,True,True,50,0,0,0,7.915424719999996
 3,52.1,100.53,233.3,False,True,True,50,0,0,0,3,50.77,88.22,253.59,False,True,True,50,0,0,0,8.076963999999997
 4,50.77,88.22,253.59,False,True,True,50,0,0,0,4,41.59,80.66,247.27,False,True,True,50,1,0,0,8.241799999999996
 5,41.59,80.66,247.27,False,True,True,50,1,0,0,5,42.38,76.08,285.09,True,True,True,8.409999999999997,NONE,NONE,NONE,8.409999999999997
+=======
+0,50,100,250,False,False,False,400,0,1,1,0,54.32,88.35,245.67,False,True,True,50,0,0,0,2.938824000000002
+1,54.32,88.35,245.67,False,True,True,50,0,0,0,1,46.94,94.39,221.03,False,True,True,50,1,0,0,2.9988000000000024
+2,46.94,94.39,221.03,False,True,True,50,1,0,0,2,46.73,77.11,208.49,True,True,True,3.0600000000000023,NONE,NONE,NONE,3.0600000000000023
+>>>>>>> cb45154... Added price-bool function.
