@@ -108,7 +108,7 @@ def simulate(q_approximation, epsilon, theta, output):
         price_a, price_b, price_c = calculate_prices(price_a, price_b, price_c)
         f.write(",".join([str(i), str(price_a), str(price_b), str(price_c), str(bought_a), str(bought_b), str(bought_c), str(money_left)]))
 
-
+    
         if bought_a and bought_b and bought_c:
             break
 
@@ -218,6 +218,33 @@ def q_gradient_price(s_date, s_price_a, s_price_b, s_price_c,
 
     return np.array(features, float)
 
+def q_approximation_price_bool(theta, s_date, s_price_a, s_price_b, s_price_c,
+                                s_bought_a, s_bought_b, s_bought_c,
+                                s_money_left,
+                                buy_a, buy_b, buy_c):
+    features = [
+        (DAYS - s_date) * s_money_left,
+        (PRICE_A - s_price_a) * (1 if buy_a else -1),
+        (PRICE_B - s_price_b) * (1 if buy_b else -1),
+        (PRICE_C - s_price_c) * (1 if buy_c else -1)
+    ]
+
+    return np.dot(theta, features)
+
+
+def q_gradient_price_bool(s_date, s_price_a, s_price_b, s_price_c,
+                            s_bought_a, s_bought_b, s_bought_c,
+                            s_money_left,
+                            buy_a, buy_b, buy_c):
+    features = [
+        (DAYS - s_date) * s_money_left,
+        (PRICE_A - s_price_a) * (1 if buy_a else -1),
+        (PRICE_B - s_price_b) * (1 if buy_b else -1),
+        (PRICE_C - s_price_c) * (1 if buy_c else -1)
+    ]
+
+    return np.array(features, float)
+
 def learn(q_approximation, q_gradient, alpha, theta, data):
     with io.open(data, "r") as f:
         f.readline() # Skip headers
@@ -307,8 +334,6 @@ def user_simulate():
     
     
 def main():
-    # user_simulate()
-
     """
     Linear: 11 features
     q_approximation_linear
@@ -330,6 +355,11 @@ def main():
         q_approximation = q_approximation_price
         q_gradient = q_gradient_price
         alpha = 1e-10
+    elif mode == "price-bool":
+        theta = np.zeros(3)
+        q_approximation = q_approximation_price_bool
+        q_gradient = q_gradient_price_bool
+        alpha = 1e-9
     else:
         print("MODE INVALID")
         return
@@ -352,6 +382,7 @@ def main():
     plt.ylabel('Reward')
     plt.show()
     print("Average score across {} iterations: {}".format(NUM_ITERATIONS, np.mean(scores)))
+    print("Average score across final {} iterations: {}".format(100, np.mean(scores[-100:])))
 
 if __name__ == "__main__":
     main()
